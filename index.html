@@ -192,7 +192,7 @@
     x: W - 100, y: H - 80,
     angle: Math.PI - 0.5, targetAngle: Math.PI - 0.5,
     minAngle: Math.PI - 0.5, maxAngle: Math.PI + 0.5,
-    dir: -1, length: FLIPPER_LENGTH
+    dir: 1, length: FLIPPER_LENGTH
   };
 
   // Bumpers (circular)
@@ -287,8 +287,8 @@
       if (gameState === 'launching') {
         // Launch!
         ball.active = true;
-        ball.vy = -(launchPower * 0.22 + 5);
-        ball.vx = (Math.random() - 0.5) * 0.5;
+        ball.vy = -(launchPower * 0.20 + 14);
+        ball.vx = (Math.random() - 0.5) * 2.5;
         gameState = 'playing';
         setMessage('');
       }
@@ -359,7 +359,7 @@
 
     // Limit speed
     const speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
-    if (speed > 20) { ball.vx = ball.vx / speed * 20; ball.vy = ball.vy / speed * 20; }
+    if (speed > 30) { ball.vx = ball.vx / speed * 30; ball.vy = ball.vy / speed * 30; }
 
     // Table boundary
     if (ball.x - BALL_RADIUS < 30) { ball.x = 30 + BALL_RADIUS; ball.vx = Math.abs(ball.vx) * 0.7; }
@@ -488,7 +488,7 @@
 
   function checkFlipperCollision(flipper) {
     // Flipper is a line from pivot to tip
-    const tipX = flipper.x + Math.cos(flipper.angle) * flipper.length * flipper.dir;
+    const tipX = flipper.x + Math.cos(flipper.angle) * flipper.length;
     const tipY = flipper.y + Math.sin(flipper.angle) * flipper.length;
 
     const dx = tipX - flipper.x;
@@ -510,15 +510,18 @@
       ball.y = closestY + ny * (BALL_RADIUS + 5);
 
       // Flipper velocity boost
-      const flipSpeed = (flipper.targetAngle - flipper.angle) * 6;
+      const flipSpeed = (flipper.targetAngle - flipper.angle);
       const dot = ball.vx * nx + ball.vy * ny;
       if (dot < 0) {
         ball.vx -= (1 + 0.7) * dot * nx;
         ball.vy -= (1 + 0.7) * dot * ny;
-        // Add flipper angular velocity
-        ball.vx += flipSpeed * nx * (flipper.dir === 1 ? -1 : 1) * 2;
-        ball.vy -= Math.abs(flipSpeed) * 3;
-        if (ball.vy > -2) ball.vy = -8; // Always kick up
+        // Add angular momentum from flipper swing
+        const kick = Math.abs(flipSpeed) * 10;
+        ball.vy -= kick;
+        // Left flipper kicks right, right flipper kicks left
+        if (flipper === leftFlipper)  ball.vx += kick * 0.4;
+        else                          ball.vx -= kick * 0.4;
+        if (ball.vy > -4) ball.vy = -10; // Always kick up hard
       }
     }
   }
@@ -746,7 +749,7 @@
   }
 
   function drawFlipper(f, color) {
-    const tipX = f.x + Math.cos(f.angle) * f.length * f.dir;
+    const tipX = f.x + Math.cos(f.angle) * f.length;
     const tipY = f.y + Math.sin(f.angle) * f.length;
 
     ctx.save();
